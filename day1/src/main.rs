@@ -43,20 +43,16 @@ fn main() {
 
 fn extract(numbers: &HashMap<&str, i32>, s: &str) -> u32 {
     let first = numbers.iter()
-        .map(|(k,v)| (s.find(k), v))
-        .filter(|(k, _)| k.is_some())
-        .map(|(k, v)| (k.expect("is some"), v))
+        .filter_map(|(k,digit)| s.find(k).map(|index| (index, digit)))
         .min_by(|a, b| a.0.cmp(&b.0))
-        .expect("at least one value")
+        .expect("at least one digit")
         .1;
     let last = numbers.iter()
-        .map(|(k,v)| (s.rfind(k), v))
-        .filter(|(k, _)| k.is_some())
-        .map(|(k, v)| (k.expect("is some"), v))
+        .filter_map(|(k,digit)| s.rfind(k).map(|index| (index, digit)))
         .max_by(|a, b| a.0.cmp(&b.0))
-        .expect("at least one value")
+        .expect("at least one digit")
         .1;
-    return format!("{first}{last}").parse().expect("must be a number");
+    format!("{first}{last}").parse().expect("must be a number")
 }
 
 fn read_lines(filename: &str) -> Vec<String> {
