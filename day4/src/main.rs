@@ -1,14 +1,33 @@
-use std::{fs::read_to_string, collections::HashSet};
+use std::{fs::read_to_string, collections::{HashSet, VecDeque}};
 
 fn main() {
     let lines = read_lines("./prompt.txt");
-    let cards: u32 = lines.iter()
+    let all_cards: Vec<Card> = lines.iter()
         .map(|l| parse_card(l))
-        .map(|c| winning_subset(c))
-        .map(|v|v.len())
+        .collect();
+
+    let a1: u32 = all_cards.iter()
+        .map(|c| winning_subset(&c))
         .map(|n|score(n))
         .sum();
-    println!("{:?}", cards);
+    println!("{}", a1);
+
+    let a2 = process_cards(all_cards);
+    println!("{}", a2);
+}
+
+fn process_cards(initial: Vec<Card>) -> u32 {
+    let mut cards: VecDeque<(&Card, u32)> = initial.iter().map(|c|(c, 1)).collect::<VecDeque<_>>();
+    let mut count = 0;
+    while !cards.is_empty() {
+        let (card, num) = cards.pop_front().expect("first card");
+        let winning_len = winning_subset(card);
+        for i in 0..winning_len {
+            cards[i] = (cards[i].0, cards[i].1 + num);
+        }
+        count += num;
+    }
+    count
 }
 
 fn score(n: usize) -> u32 {
@@ -17,12 +36,12 @@ fn score(n: usize) -> u32 {
     base.pow(u32::try_from(n-1).expect("usize"))
 }
 
-fn winning_subset(c: Card) -> Vec<u32> {
+fn winning_subset(c: &Card) -> usize {
     let mut winning_set = HashSet::new();
     for n in c.winning_numbers.iter() {
         winning_set.insert(n);
     }
-    c.your_numbers.into_iter().filter(|n| winning_set.contains(n)).collect()
+    c.your_numbers.iter().filter(|n| winning_set.contains(n)).count()
 }
 
 fn parse_card(l: &str) -> Card {
@@ -37,6 +56,7 @@ fn parse_card(l: &str) -> Card {
     }
 }
 
+#[derive(Debug)]
 struct Card {
     winning_numbers: Vec<u32>,
     your_numbers: Vec<u32>,
